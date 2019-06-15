@@ -45,14 +45,12 @@ function(
                 labelcolor: "#000000",
                 color: "schemeCategory10"
             };
-
             // Override defaults with selected items from the UI
             for (var opt in config) {
                 if (config.hasOwnProperty(opt)) {
                     viz.config[ opt.replace(viz.getPropertyNamespaceInfo().propertyNamespace,'') ] = config[opt];
                 }
             }
-
             viz.data = data;
             viz.scheduleDraw();
         },
@@ -69,14 +67,17 @@ function(
         buildHierarchy: function(row) {
             var root = {"name": "root", "children": []};
             for (var i = 0; i < row.length; i++) {
-                var size = row[i][row[i].length - 1];
-                var parts = row[i];
+                var parts = row[i].slice();
+                var size = parts.pop();
+                while (parts[parts.length-1] === null || parts[parts.length-1] === "") {
+                    parts.pop();
+                }
                 var currentNode = root;
-                for (var j = 0; j < parts.length - 1; j++) {
+                for (var j = 0; j < parts.length; j++) {
                     var children = currentNode.children;
                     var nodeName = parts[j];
                     var childNode;
-                    if (j + 1 < parts.length - 1) {
+                    if (j + 1 < parts.length) {
                         // Not yet at the end of the sequence; move down the tree.
                         var foundChild = false;
                         for (var k = 0; k < children.length; k++) {
@@ -117,14 +118,6 @@ function(
             }
             if (!(viz.$container_wrap.height() > 0)) {
                 return;
-            }
-            // Keep track of the container size the config used so we know if we need to redraw teh whole page
-            viz.config.containerSize = viz.$container_wrap.height();
-            var serialised = JSON.stringify(viz.config);
-            var doAFullRedraw = false;
-            if (viz.alreadyDrawn !== serialised) {
-                doAFullRedraw = true;
-                viz.alreadyDrawn = serialised;
             }
             var total = 0;
             for (var i = 0; i < viz.data.rows.length; i++) {
