@@ -1,0 +1,83 @@
+<form class="splunk-formatter-section" section-label="General">
+
+        <splunk-control-group label="Mode">
+                <splunk-radio-input name="{{VIZ_NAMESPACE}}.mode" value="static">
+                        <option value="zoomable">Zoomable</option>
+                        <option value="static">Static</option>
+                </splunk-radio-input>
+        </splunk-control-group>
+
+        <splunk-control-group label="Labels">
+                <splunk-radio-input name="{{VIZ_NAMESPACE}}.labels" value="show">
+                        <option value="show">Show</option>
+                        <option value="hide">Hide</option>
+                </splunk-radio-input>
+        </splunk-control-group>
+        
+        <splunk-control-group label="Label size">
+                <splunk-text-input name="{{VIZ_NAMESPACE}}.labelsize" value="100" style="width:64px; vertical-align:top; display:inline-block; flex:none; margin-right:4px;"></splunk-text-input>
+                <span style="display:inline-block; margin:5px 15px 5px 5px;">%</span>
+        </splunk-control-group> 
+
+        <splunk-control-group label="Label width">
+                <splunk-text-input name="{{VIZ_NAMESPACE}}.labelwidth" value="100" style="width:64px; vertical-align:top; display:inline-block; flex:none; margin-right:4px;"></splunk-text-input>
+                <span style="display:inline-block; margin:5px 15px 5px 5px;">px</span>
+        </splunk-control-group>
+
+        <splunk-control-group label="Color set">
+                <splunk-select name="{{VIZ_NAMESPACE}}.color" value="schemeCategory10">
+                        <option value="schemeCategory10">Bright</option>
+                        <option value="schemeAccent">Accent</option>
+                        <option value="schemeDark2">Dark</option>
+                        <option value="schemePaired">Paired</option>
+                        <option value="schemePastel1">Pastel</option>
+                        <option value="interpolateRainbow">Rainbow</option>
+                        <option value="interpolateCubehelixDefault">CubehelixDefault</option>
+                        <option value="interpolateMagma">Magma</option>
+                        <option value="interpolateCool">Cool</option>
+                        <option value="interpolateBrBG">Browns</option>
+                        <option value="interpolateRdBu">Reds</option>
+                        <option value="interpolatePiYG">Pinks</option>
+                        <option value="interpolateBlues">Blues</option>
+                        <option value="interpolateGreens">Greens</option>
+                        <option value="interpolateGreys">Greys</option>
+                        <option value="interpolateOranges">Oranges</option>
+                        <option value="interpolateViridis">Purples</option>
+                </splunk-select>
+        </splunk-control-group>
+
+        <splunk-control-group label="Label color">
+                <splunk-color-picker name="{{VIZ_NAMESPACE}}.labelcolor" value="#000000" type="splunkCategorical" style="vertical-align:top; display:inline-block;">
+                        <splunk-color>#ffffff</splunk-color>
+                        <splunk-color>#C6C6C6</splunk-color>
+                        <splunk-color>#919191</splunk-color>
+                        <splunk-color>#5E5E5E</splunk-color>
+                        <splunk-color>#000000</splunk-color>
+                        <splunk-color>#53a051</splunk-color>
+                        <splunk-color>#dc4d41</splunk-color>
+                        <splunk-color>#d16f18</splunk-color>
+                        <splunk-color>#009DD9</splunk-color>
+                        <splunk-color>#ebb839</splunk-color>
+                        <splunk-color>#1a9035</splunk-color>
+                        <splunk-color>#b22b32</splunk-color>
+                        <splunk-color>#AF5300</splunk-color>
+                        <splunk-color>#0178c7</splunk-color>
+                        <splunk-color>#ecbc1b</splunk-color>
+                </splunk-color-picker>
+        </splunk-control-group>
+
+        <splunk-control-group label="Breadcrumbs">
+                <splunk-radio-input name="{{VIZ_NAMESPACE}}.breadcrumbs" value="hide">
+                        <option value="show">Show</option>
+                        <option value="hide">Hide</option>
+                </splunk-radio-input>
+        </splunk-control-group>
+</form>
+
+<form class="splunk-formatter-section" section-label="Help">
+        <splunk-control-group label=" ">
+        <div style="margin:40px 10px 40px 0;">
+                <a href="/app/sunburst_viz/documentation" target="_blank">Examples and Documentation</a>
+        </div>
+        </splunk-control-group>
+</form>
