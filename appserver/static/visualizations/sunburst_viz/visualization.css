@@ -55,3 +55,8 @@
     clip-path: polygon(calc(100% - 20px) 0%, 100% 50%, calc(100% - 20px) 100%, 0% 100%, 20px 50%, 0% 0%);
     white-space: nowrap;
 }
+.sunburst_viz-bad_data {
+    text-align: center;
+    color: #818d99;
+    line-height: 3;
+}

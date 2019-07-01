@@ -86,14 +86,25 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                labels: "show",
 	                breadcrumbs: "hide",
 	                labelsize: "100",
+	                coloroverride: "",
 	                labelwidth: "100",
 	                labelcolor: "#000000",
+	                colormode: "root",
 	                color: "schemeCategory10"
 	            };
 	            // Override defaults with selected items from the UI
 	            for (var opt in config) {
 	                if (config.hasOwnProperty(opt)) {
 	                    viz.config[ opt.replace(viz.getPropertyNamespaceInfo().propertyNamespace,'') ] = config[opt];
+	                }
+	            }
+	            viz.config._coloroverride = {};
+	            if (viz.config.coloroverride.substr(0,1) === "{") {
+	                try{ viz.config._coloroverride = JSON.parse(viz.config.coloroverride) } catch(e) {}
+	            } else {
+	                var parts = viz.config.coloroverride.split(",");
+	                for (var i = 0; i+1 < parts.length; i+=2) {
+	                    viz.config._coloroverride[parts[i]] = parts[i+1];
 	                }
 	            }
 	            viz.data = data;
@@ -109,15 +120,47 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            }, 300);
 	        },
 
-	        buildHierarchy: function(row) {
-	            var root = {"name": "root", "children": []};
-	            for (var i = 0; i < row.length; i++) {
-	                var parts = row[i].slice();
+	        getColor: function(elements) {
+	            var viz = this;
+	            if (viz.config.color.substr(0,1) === "s") {
+	                return d3.scaleOrdinal(d3[viz.config.color]);
+	            } else {
+	                var c = d3.scaleOrdinal(d3.quantize(d3[viz.config.color], Math.round((elements + 1) * 1.25)));
+	                // waste a bunch of colors, the first third are too dim to see
+	                for (var i = 0; i <= Math.round((elements + 1) * 0.2); i++) { c("sunburst_viz_" + i); }
+	                return c;
+	            }
+	        },
+	        doDraw: function(){
+	            var viz = this;
+	            // Dont draw unless this is a real element under body
+	            if (! viz.$container_wrap.parents().is("body")) {
+	                return;
+	            }
+	            if (!(viz.$container_wrap.height() > 0)) {
+	                return;
+	            }
+	            var total = 0;
+	            for (var i = 0; i < viz.data.rows.length; i++) {
+	                total += Number(viz.data.rows[i][viz.data.rows[i].length-1]);
+	            }
+	            var skippedRows = 0;
+	            var validRows = 0;
+	            var data = {"name": "root", "children": []};
+	            var drilldown, i, k;
+	            for (i = 0; i < viz.data.rows.length; i++) {
+	                var parts = viz.data.rows[i].slice();
 	                var size = parts.pop();
+	                if (size === "" || isNaN(Number(size))) {
+	                    skippedRows++;
+	                    continue;
+	                } else {
+	                    validRows++;
+	                }
 	                while (parts[parts.length-1] === null || parts[parts.length-1] === "") {
 	                    parts.pop();
 	                }
-	                var currentNode = root;
+	                var currentNode = data;
 	                for (var j = 0; j < parts.length; j++) {
 	                    var children = currentNode.children;
 	                    var nodeName = parts[j];
@@ -134,41 +177,32 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        }
 	                        // If we don't already have a child node for this branch, create it.
 	                        if (!foundChild) {
-	                            childNode = {"name": nodeName, "children": []};
+	                            drilldown = {};
+	                            for (k = 0; k <= j; k++) {
+	                                drilldown[viz.data.fields[k].name] = viz.data.rows[i][k];
+	                            }
+	                            childNode = {"name": nodeName, "drilldown": drilldown, "children": []};
 	                            children.push(childNode);
 	                        }
 	                        currentNode = childNode;
 	                    } else {
+	                        drilldown = {};
+	                        for (k = 0; k < viz.data.rows[i].length - 1; k++) {
+	                            drilldown[viz.data.fields[k].name] = viz.data.rows[i][k];
+	                        }
 	                        // Reached the end of the sequence; create a leaf node.
-	                        childNode = {"name": nodeName, "value": size};
+	                        childNode = {"name": nodeName, "drilldown": drilldown, "value": size};
 	                        children.push(childNode);
 	                    }
 	                }
 	            }
-	            return root;
-	        },
-	        getColor: function(elements) {
-	            var viz = this;
-	            if (viz.config.color.substr(0,1) === "s") {
-	                return d3.scaleOrdinal(d3[viz.config.color]);
-	            } else {
-	                return d3.scaleOrdinal(d3.quantize(d3[viz.config.color], elements + 1));
+	            if (skippedRows) {
+	                console.log("Rows skipped because last column is not numeric: ", skippedRows);
 	            }
-	        },
-	        doDraw: function(){
-	            var viz = this;
-	            // Dont draw unless this is a real element under body
-	            if (! viz.$container_wrap.parents().is("body")) {
+	            if (skippedRows && ! validRows) {
+	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Last column of data must contain numeric values.</div>");
 	                return;
 	            }
-	            if (!(viz.$container_wrap.height() > 0)) {
-	                return;
-	            }
-	            var total = 0;
-	            for (var i = 0; i < viz.data.rows.length; i++) {
-	                total += Number(viz.data.rows[i][viz.data.rows[i].length-1]);
-	            }
-	            var data = viz.buildHierarchy(viz.data.rows);
 	            var svg;
 	            var labelsize = Number(viz.config.labelsize) / 100 * 16;
 
@@ -251,7 +285,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        .size([2 * Math.PI, root.height + 1])
 	                        (root);
 	                };
-	                color = viz.getColor(data.children.length);
+	                color = viz.getColor(viz.data.rows.length);
 	                arc = d3.arc()
 	                    .startAngle(d => d.x0)
 	                    .endAngle(d => d.x1)
@@ -267,8 +301,19 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                .selectAll("path")
 	                .data(root.descendants().slice(1))
 	                .join("path")
-	                    .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-	                    .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 0.8 : 0.6) : 0)
+	                    .attr("fill", d => {
+	                        if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
+	                            return viz.config._coloroverride[d.data.name];
+	                        }
+	                        if (viz.config.colormode === "root") {
+	                            while (d.depth > 1) d = d.parent; return color(d.data.name);
+	                        }
+	                        if (viz.config.colormode === "parent") {
+	                            return color(d.parent.data.name);
+	                        }
+	                        return color(d.data.name);
+	                    })
+	                    .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0)
 	                    .attr("d", d => arc(d.current));
 
 	                path.filter(d => d.children)
@@ -327,7 +372,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        .filter(function(d) {
 	                            return +this.getAttribute("fill-opacity") || arcVisible(d.target);
 	                        })
-	                        .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
+	                        .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 0.8 : 0.6) : 0)
 	                        .attrTween("d", d => () => arc(d.current));
 
 	                    label.filter(function(d) {
@@ -356,7 +401,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    (d3.hierarchy(data)
 	                        .sum(d => d.value)
 	                        .sort((a, b) => b.value - a.value));
-	                color = viz.getColor(data.children.length);
+	                color = viz.getColor(viz.data.rows.length);
 	                arc = d3.arc()
 	                    .startAngle(d => d.x0)
 	                    .endAngle(d => d.x1)
@@ -365,16 +410,53 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    .innerRadius(d => d.y0)
 	                    .outerRadius(d => d.y1 - 1);
 	                const root = partition(data);
-	                svg.append("g")
-	                    .attr("fill-opacity", 0.8)
-	                .selectAll("path")
-	                .data(root.descendants().filter(d => d.depth))
-	                .enter().append("path")
-	                    .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-	                    .attr("d", arc)
-	                    .on("mouseover", tooltipCreate)
-	                    .on("mousemove", function() { tooltipMove(event);})
-	                    .on("mouseout", tooltiphide);
+	                var node = svg.append("g")
+	                    //.attr("fill-opacity", 0.8)
+	                    .selectAll("path")
+	                    .data(root.descendants().filter(d => d.depth))
+	                    .enter().append("path")
+	                        .attr("fill", d => {
+	                            if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
+	                                return viz.config._coloroverride[d.data.name];
+	                            }
+	                            if (viz.config.colormode === "root") {
+	                                while (d.depth > 1) d = d.parent; return color(d.data.name);
+	                            }
+	                            if (viz.config.colormode === "parent") {
+	                                return color(d.parent.data.name);
+	                            }
+	                            return color(d.data.name);
+	                        })
+	                        .attr("d", arc)
+	                        .on("mouseover", tooltipCreate)
+	                        .on("mousemove", function() { tooltipMove(event);})
+	                        .on("mouseout", tooltiphide);
+
+	                if (viz.config.mode === "token" || viz.config.mode === "drilldown") {
+	                    node.style("cursor", "pointer")
+	                        .on("click", function(d, browserEvent){
+	                            if (viz.config.mode === "token") {
+	                                var defaultTokenModel = splunkjs.mvc.Components.get('default');
+	                                var submittedTokenModel = splunkjs.mvc.Components.get('submitted');
+	                                for (var item in d.data.drilldown) {
+	                                    if (d.data.drilldown.hasOwnProperty(item)) {
+	                                        console.log("Setting token $sunburst_viz_" +  item + "$ to", d.data.drilldown[item]);
+	                                        if (defaultTokenModel) {
+	                                            defaultTokenModel.set("sunburst_viz_" + item, d.data.drilldown[item]);
+	                                        } 
+	                                        if (submittedTokenModel) {
+	                                            submittedTokenModel.set("sunburst_viz_" + item, d.data.drilldown[item]);
+	                                        }
+	                                    }
+	                                }
+	                            } else {
+	                                viz.drilldown({
+	                                    action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
+	                                    data: d.data.drilldown
+	                                });
+	                            }
+	                        });
+	                }
 	                svg.append("g")
 	                    .attr("pointer-events", "none")
 	                    .attr("text-anchor", "middle")

@@ -1,4 +1,4 @@
-<form theme="light">
+<dashboard theme="light">
   <label>Sunburst Viz - Documentation</label>
   <row>
     <panel>
@@ -9,8 +9,8 @@
 }
 </style>
 <div style="max-width: 1200px; margin: 0 auto;">
-<h2>Sunburst Viz</h2>
 <p>Configurable Sunburst visualization that is easy to use. Built using D3. Has tooltips, optional breadcrumbs, label customisations and numerous color schemes. Works in dark-mode. Sunburst charts are useful to display hierarchical data.</p>
+<br/>
 <p>Copyright (C) 2019 Chris Younger. I am a Splunk Professional Services consultant working for JDS Australia, in Brisbane Australia.</p>
 <p><a href="https://github.com/ChrisYounger/sunburst_viz">Source code</a> | <a href="https://splunkbase.splunk.com/app/4550/">Splunkbase</a> | <a href="https://answers.splunk.com/app/questions/4550.html">Questions, Bugs or Suggestions</a> | <a href="https://splunkbase.splunk.com/apps/#/author/chrisyoungerjds">My Splunk apps</a></p>
 
@@ -19,19 +19,22 @@
 <br/>
 
 <h2>Usage</h2>
-<p>This visualisation expects tablular data, with any amount of text/category columns, but the last column should be the numerical value. Null or blank columns are allowed before the final column to create a more "sunburst-y" visualization.</p>
+<p>This visualisation expects tabular data, with any amount of text/category columns, but the last column must be the numerical value. Null or blank columns are allowed before the final column to create a more "sunburst-y" visualization.</p>
 <p>The typical search uses <code>stats</code> command like so:</p>
-<pre class="highlight"><code>index=* | stats count BY index sourcetype source</code></pre>
+<pre class="highlight">
+<code>index=* | stats count BY index sourcetype source</code></pre>
 
-
+<br/>
 <p>Sidenode: a much faster search to do the same thing is </p>
-<pre class="highlight"><code>|tstats count where index=* BY index sourcetype source</code></pre>
+<pre class="highlight">
+<code>|tstats count where index=* BY index sourcetype source</code></pre>
 
-
+<br/>
 <p>Note that <code>stats</code> does not return rows when the group BY field is <code>null</code>. Use this one simple trick to convert nulls to be an empty string instead:</p>
-<pre class="highlight"><code>index=_internal | eval component = coalesce(component,"") | eval log_level = coalesce(log_level,"") | stats count by sourcetype component log_level</code></pre>
+<pre class="highlight">
+<code>index=_internal | eval component = coalesce(component,"") | eval log_level = coalesce(log_level,"") | stats count by sourcetype component log_level</code></pre>
 
-
+<br/>
 <p>Add more fields after the "BY" keyword to increase the depth of the sunburst</p>
 
 <br/>
@@ -40,7 +43,13 @@
 
 <h2>Formatting options</h2>
 
-<img src="https://raw.githubusercontent.com/ChrisYounger/sunburst_viz/master/static/formatting.png" />
+<img src="/static/app/sunburst_viz/formatting.png"/>
+<br/><br/>
+<p>The "Color overrides" field accepts either a JSON object (in curly braces) or comma separated pairs. For example to make sure that "INFO" values are green, WARN's are orange and ERROR's are red, set the value like so: </p>
+<pre class="highlight">
+<code>INFO,#1a9035,ERROR,#b22b32,WARN,#AF5300</code></pre>
+<br/>
+<p>Examples of color themes: <a href="/static/app/sunburst_viz/themes.png"><br /><img alt="" src="/static/app/sunburst_viz/themes.png" style="max-width: 500px;" /></a></p>
 
 <br/>
 <br/>
@@ -51,7 +60,6 @@
 <ul>
 <li>jQuery - MIT - <a href="https://jquery.com/">https://jquery.com/</a></li>
 <li>D3 - BSD 3-Clause - <a href="https://d3js.org/">https://d3js.org/</a></li>
-<li>Font Awesome - Creative Commons Attribution-ShareAlike 4.0 License - <a href="https://fontawesome.com/">https://fontawesome.com/</a></li>
 </ul>
 
 </div>
@@ -59,13 +67,14 @@
     </panel>
     <panel>
       <viz type="sunburst_viz.sunburst_viz">
+        <title>Example 1</title>
         <search>
           <query>| makeresults   
 | eval raw = "
 index=checkpoint sourcetype=opsec source=1.2.3.4 count=936498 ### 
 index=checkpoint sourcetype=opsec source=1.2.5.6 count=856998 ### 
-index=gateways sourcetype=cisco:asa source=/opt/rsyslog/1.5.3.6/XX.log count=1200098 ### 
-index=gateways sourcetype=f5 source=/opt/rsyslog/1.5.3.6/XX.log count=200098 ### 
+index=gateways sourcetype=pan_traffic source=/rsyslog/1.2.3.4/XX.log count=1200098 ### 
+index=gateways sourcetype=f5 source=/rsyslog/1.2.3.6/XX.log count=200098 ### 
 index=sysmon sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational	source=WinEventLog:ForwardedEvents	 count=356998 ### 
 index=stream sourcetype=stream:ip	source=stream:Splunk_IP count=256998 ### 
 index=gateway sourcetype=iis	source=C:\inetpub\logs\LogFiles\W#SVC#\u_ex#.log count=156998 ### 
@@ -83,8 +92,10 @@ index=stream sourcetype=stream:udp	source=stream:Splunk_Udp count=56998
         </search>
         <option name="drilldown">none</option>
         <option name="height">450</option>
+        <option name="refresh.display">progressbar</option>
         <option name="sunburst_viz.sunburst_viz.breadcrumbs">show</option>
         <option name="sunburst_viz.sunburst_viz.color">schemeCategory10</option>
+        <option name="sunburst_viz.sunburst_viz.colormode">root</option>
         <option name="sunburst_viz.sunburst_viz.labelcolor">#000000</option>
         <option name="sunburst_viz.sunburst_viz.labels">show</option>
         <option name="sunburst_viz.sunburst_viz.labelsize">120</option>
@@ -95,6 +106,7 @@ index=stream sourcetype=stream:udp	source=stream:Splunk_Udp count=56998
         <option name="trellis.size">medium</option>
       </viz>
       <viz type="sunburst_viz.sunburst_viz">
+        <title>Example 2</title>
         <search>
           <query>| makeresults   
 | eval raw = "
@@ -206,10 +218,12 @@ sourcetype=testdata component= log_level= count=294
           <latest>now</latest>
           <sampleRatio>1</sampleRatio>
         </search>
-        <option name="height">450</option>
         <option name="drilldown">none</option>
+        <option name="height">450</option>
         <option name="sunburst_viz.sunburst_viz.breadcrumbs">hide</option>
         <option name="sunburst_viz.sunburst_viz.color">interpolateRainbow</option>
+        <option name="sunburst_viz.sunburst_viz.colormode">name</option>
+        <option name="sunburst_viz.sunburst_viz.coloroverride">INFO,green,WARNING,orange,ERROR,red</option>
         <option name="sunburst_viz.sunburst_viz.labelcolor">#000000</option>
         <option name="sunburst_viz.sunburst_viz.labels">show</option>
         <option name="sunburst_viz.sunburst_viz.labelsize">120</option>
@@ -219,7 +233,6 @@ sourcetype=testdata component= log_level= count=294
         <option name="trellis.scales.shared">1</option>
         <option name="trellis.size">medium</option>
       </viz>
-    </panel>    
+    </panel>
   </row>
-
-</form>
+</dashboard>

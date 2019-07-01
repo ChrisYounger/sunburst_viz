@@ -1,10 +1,12 @@
 <form class="splunk-formatter-section" section-label="General">
 
-        <splunk-control-group label="Mode">
-                <splunk-radio-input name="{{VIZ_NAMESPACE}}.mode" value="static">
-                        <option value="zoomable">Zoomable</option>
-                        <option value="static">Static</option>
-                </splunk-radio-input>
+        <splunk-control-group label="Click action">
+                <splunk-select name="{{VIZ_NAMESPACE}}.mode" value="static">
+                        <option value="static">None</option>
+                        <option value="zoomable">Zoom in</option>
+                        <option value="drilldown">Drilldown to search</option>
+                        <option value="token">Set tokens $sunburst_viz_{field}$</option>
+                </splunk-select>
         </splunk-control-group>
 
         <splunk-control-group label="Color set">
@@ -13,20 +15,38 @@
                         <option value="schemeAccent">Accent</option>
                         <option value="schemeDark2">Dark</option>
                         <option value="schemePaired">Paired</option>
-                        <option value="schemePastel1">Pastel</option>
+                        <option value="schemePastel1">Pastel 1</option>
+                        <option value="schemePastel2">Pastel 2</option>
+                        <option value="schemeSet1">Schemeset 1</option>
+                        <option value="schemeSet2">Schemeset 2</option>
+                        <option value="schemeSet3">Schemeset 3</option> 
                         <option value="interpolateRainbow">Rainbow</option>
+                        <option value="interpolateSinebow">Sinebow</option>
                         <option value="interpolateCubehelixDefault">Cubehelix</option>
                         <option value="interpolateMagma">Magma</option>
+                        <option value="interpolatePlasma">Plasma</option>
+                        <option value="interpolateViridis">Viridis</option>
                         <option value="interpolateCool">Cool</option>
-                        <option value="interpolateBrBG">Browns</option>
-                        <option value="interpolateRdBu">Reds</option>
-                        <option value="interpolatePiYG">Pinks</option>
+                        <option value="interpolateWarm">Warm</option>
                         <option value="interpolateBlues">Blues</option>
                         <option value="interpolateGreens">Greens</option>
                         <option value="interpolateGreys">Greys</option>
                         <option value="interpolateOranges">Oranges</option>
-                        <option value="interpolateViridis">Purples</option>
+                        <option value="interpolatePurples">Purples</option>
+                        <option value="interpolateReds">Reds</option>
                 </splunk-select>
+        </splunk-control-group>
+
+        <splunk-control-group label="Set color by">
+                <splunk-select name="{{VIZ_NAMESPACE}}.colormode" value="root">
+                        <option value="root">Base ring name</option>
+                        <option value="parent">Parent node name</option>
+                        <option value="name">Node name</option>
+                </splunk-select>
+        </splunk-control-group>
+
+        <splunk-control-group label="Color overrides">
+                <splunk-text-input name="{{VIZ_NAMESPACE}}.coloroverride" value=""></splunk-text-input>
         </splunk-control-group>
 
         <splunk-control-group label="Breadcrumbs">
@@ -72,13 +92,17 @@
                         <splunk-color>#ecbc1b</splunk-color>
                 </splunk-color-picker>
         </splunk-control-group>
-
 </form>
 
 <form class="splunk-formatter-section" section-label="Help">
         <splunk-control-group label=" ">
-        <div style="margin:40px 10px 40px 0;">
-                <a href="/app/sunburst_viz/documentation" target="_blank">Examples and Documentation</a>
-        </div>
+        <div style="margin-top:40px 10px 10px 0">
+                <div>Example queries:</div>
+                <div style="margin-top:10px;"><code>... | table group1 group2 group3 count</code></div>
+                <div>or</div>
+                <div><code>... | stats count by group1 group2 group3</code></div>
+                <div style="margin-top:30px;"><a href="/app/sunburst_viz/documentation" target="_blank">Examples and Documentation</a></div>
+                <div style="margin-top:40px;">By Chris Younger - <a href="https://splunkbase.splunk.com/apps/#/author/chrisyoungerjds" target="_blank">My other apps</a></div>
+        </div> 
         </splunk-control-group>
 </form>
