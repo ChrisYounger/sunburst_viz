@@ -8,3 +8,4 @@ default.visualizations.custom.sunburst_viz.sunburst_viz.labelcolor = <string>
 default.visualizations.custom.sunburst_viz.sunburst_viz.color = <string>
 default.visualizations.custom.sunburst_viz.sunburst_viz.colormode = <string>
 default.visualizations.custom.sunburst_viz.sunburst_viz.coloroverride = <string>
+default.visualizations.custom.sunburst_viz.sunburst_viz.maxrows = <string>

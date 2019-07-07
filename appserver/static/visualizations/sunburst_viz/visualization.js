@@ -61,12 +61,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	        initialize: function() {
 	            SplunkVisualizationBase.prototype.initialize.apply(this, arguments);
 	            var viz = this;
-	            viz.instance_id = Math.round(Math.random() * 1000000);
+	            viz.instance_id = "sunburst_viz_" + Math.round(Math.random() * 1000000);
 	            var theme = 'light'; 
 	            if (typeof vizUtils.getCurrentTheme === "function") {
 	                theme = vizUtils.getCurrentTheme();
 	            }
-	            // TODO dark mode
 	            viz.colors = ["#006d9c", "#4fa484", "#ec9960", "#af575a", "#b6c75a", "#62b3b2"];
 	            if (typeof vizUtils.getColorPalette === "function") {
 	                viz.colors = vizUtils.getColorPalette("splunkCategorical", theme);
@@ -90,7 +89,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                labelwidth: "100",
 	                labelcolor: "#000000",
 	                colormode: "root",
-	                color: "schemeCategory10"
+	                color: "schemeCategory10",
+	                maxrows: "1500"
 	            };
 	            // Override defaults with selected items from the UI
 	            for (var opt in config) {
@@ -100,7 +100,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            }
 	            viz.config._coloroverride = {};
 	            if (viz.config.coloroverride.substr(0,1) === "{") {
-	                try{ viz.config._coloroverride = JSON.parse(viz.config.coloroverride) } catch(e) {}
+	                try{ viz.config._coloroverride = JSON.parse(viz.config.coloroverride); } catch(e) {}
 	            } else {
 	                var parts = viz.config.coloroverride.split(",");
 	                for (var i = 0; i+1 < parts.length; i+=2) {
@@ -141,8 +141,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                return;
 	            }
 	            var total = 0;
-	            for (var i = 0; i < viz.data.rows.length; i++) {
-	                total += Number(viz.data.rows[i][viz.data.rows[i].length-1]);
+	            for (var l = 0; l < viz.data.rows.length; l++) {
+	                total += Number(viz.data.rows[l][viz.data.rows[l].length-1]);
 	            }
 	            var skippedRows = 0;
 	            var validRows = 0;
@@ -150,8 +150,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            var drilldown, i, k;
 	            for (i = 0; i < viz.data.rows.length; i++) {
 	                var parts = viz.data.rows[i].slice();
-	                var size = parts.pop();
-	                if (size === "" || isNaN(Number(size))) {
+	                var nodesize = parts.pop();
+	                if (nodesize === "" || isNaN(Number(nodesize))) {
 	                    skippedRows++;
 	                    continue;
 	                } else {
@@ -168,7 +168,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    if (j + 1 < parts.length) {
 	                        // Not yet at the end of the sequence; move down the tree.
 	                        var foundChild = false;
-	                        for (var k = 0; k < children.length; k++) {
+	                        for (k = 0; k < children.length; k++) {
 	                            if (children[k].name == nodeName) {
 	                                childNode = children[k];
 	                                foundChild = true;
@@ -191,7 +191,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                            drilldown[viz.data.fields[k].name] = viz.data.rows[i][k];
 	                        }
 	                        // Reached the end of the sequence; create a leaf node.
-	                        childNode = {"name": nodeName, "drilldown": drilldown, "value": size};
+	                        childNode = {"name": nodeName, "drilldown": drilldown, "value": nodesize};
 	                        children.push(childNode);
 	                    }
 	                }
@@ -201,6 +201,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            }
 	            if (skippedRows && ! validRows) {
 	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Last column of data must contain numeric values.</div>");
+	                return;
+	            }
+	            if (validRows > Number(viz.config.maxrows)) {
+	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Too many rows of data (Total rows:" + validRows + ", Limit: " + viz.config.maxrows + "). </div>");
 	                return;
 	            }
 	            var svg;
@@ -223,8 +227,9 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    textLength = self.node().getComputedTextLength();
 	                }
 	            }
+
 	            function tooltipCreate(d) {
-	                var parts = d.ancestors().map(d => d.data.name).reverse();
+	                var parts = d.ancestors().map(function(d) { return d.data.name; }).reverse();
 	                var crumbs = [$("<div class='sunburst_viz-first'></div>")];
 	                var tt = $("<div></div>");
 	                for (var i = 1; i < parts.length; i++) {
@@ -240,20 +245,80 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    viz.breadcrumbTimeout = setTimeout(function(){ breadcrumbs.empty(); },5000);
 	                }
 	                $("<div></div>").text(format(d.value) + " - " + Math.round(d.value / total * 10000) / 100 + " %").appendTo(tt);
-	                var clientRectangle = svg_node[0].getBoundingClientRect();
-	                var clientRectangleWrap = viz.$container_wrap[0].getBoundingClientRect();
-	                viz.widthOffset = clientRectangle.x - clientRectangleWrap.x;
+	                viz.container_wrap_offset = viz.$container_wrap.offset();
 	                return tooltip.css("visibility", "visible").html(tt);
 	            }
+
 	            // we move tooltip during of "mousemove"
 	            function tooltipMove(event) {
-	                return tooltip.css("top", (event.offsetY - 30) + "px").css("left", (event.offsetX + viz.widthOffset + 20) + "px"); // 
+	                return tooltip.css({"top": (event.pageY - viz.container_wrap_offset.top - 30) + "px", "left": (event.pageX - viz.container_wrap_offset.left + 20) + "px"});
 	            }
+
 	            // we hide our tooltip on "mouseout"
 	            function tooltiphide() {
 	                return tooltip.css("visibility", "hidden");
 	            }
-	            
+
+	            function clicked(p) {
+	                if (p.parent === null) {
+	                    parent.style("cursor", "default");
+	                } else {
+	                    parent.style("cursor", "pointer");
+	                }
+	                parent.datum(p.parent || root);
+
+	                root.each(function(d) { 
+	                    d.target = {
+	                        x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+	                        x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+	                        y0: Math.max(0, d.y0 - p.depth),
+	                        y1: Math.max(0, d.y1 - p.depth)
+	                    };
+	                    return d.target;
+	                });
+	                var trans = g.transition().duration(750);
+	                // Transition the data on all arcs, even the ones that aren’t visible,
+	                // so that if this transition is interrupted, entering arcs will start
+	                // the next transition from the desired position.
+	                path.transition(trans)
+	                    .tween("data", function(d) {
+	                        var i = d3.interpolate(d.current, d.target);
+	                        return function(t) {
+	                            d.current = i(t);
+	                            return d.current; 
+	                        };
+	                    })
+	                    .filter(function(d) {
+	                        return +this.getAttribute("fill-opacity") || arcVisible(d.target);
+	                    })
+	                    .attr("fill-opacity", function(d) { return arcVisible(d.target) ? (d.children ? 0.8 : 0.6) : 0; })
+	                    .attrTween("d", function(d) { 
+	                        return function() { return arc(d.current); };
+	                    });
+	                label.filter(function(d) {
+	                    return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+	                })
+	                .transition(trans)
+	                .attr("fill-opacity", function(d) { return +labelVisible(d.target); })
+	                .attrTween("transform", function(d) { 
+	                    return function() { return labelTransform(d.current); };
+	                });
+	            }
+
+	            function arcVisible(d) {
+	                return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
+	            }
+
+	            function labelVisible(d) {
+	                return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+	            }
+
+	            function labelTransform(d) {
+	                var x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+	                var y = (d.y0 + d.y1) / 2 * radius;
+	                return "rotate(" + (x - 90) + ") translate(" + y + ",0) rotate(" + (x < 180 ? 0 : 180) + ")";
+	            }
+
 	            var format = d3.format(",d");
 	            var width = 800;
 	            var radius, color, arc, partition;
@@ -273,35 +338,35 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            var tooltip = $("<div class='sunburst_viz-tooltip'></div>");
 	            var breadcrumbs = $("<div class='sunburst_viz-breakcrumbs'></div>");
 	            viz.$container_wrap.append(tooltip, breadcrumbs);
+	            
+	            var root;
 
 	            if (viz.config.mode === "zoomable") {
 	                // https://observablehq.com/@d3/zoomable-sunburst
 	                radius = width / 6;
-	                partition = data => {
-	                    const root = d3.hierarchy(data)
-	                        .sum(d => d.value)
-	                        .sort((a, b) => b.value - a.value);
-	                    return d3.partition()
-	                        .size([2 * Math.PI, root.height + 1])
-	                        (root);
+	                partition = function(data) {
+	                    var r = d3.hierarchy(data)
+	                        .sum(function(d) { return d.value; })
+	                        .sort(function(a, b) { return b.value - a.value; });
+	                    return d3.partition().size([2 * Math.PI, r.height + 1])(r);
 	                };
 	                color = viz.getColor(viz.data.rows.length);
 	                arc = d3.arc()
-	                    .startAngle(d => d.x0)
-	                    .endAngle(d => d.x1)
-	                    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+	                    .startAngle(function(d) { return d.x0; })
+	                    .endAngle(function(d) { return d.x1; })
+	                    .padAngle(function(d) { return Math.min((d.x1 - d.x0) / 2, 0.005); })
 	                    .padRadius(radius * 1.5)
-	                    .innerRadius(d => d.y0 * radius)
-	                    .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
-	                const root = partition(data);
-	                root.each(d => d.current = d);
-	                const g = svg.append("g")
-	                    .attr("transform", `translate(${width / 2},${width / 2})`);
-	                const path = g.append("g")
+	                    .innerRadius(function(d) { return d.y0 * radius; })
+	                    .outerRadius(function(d) { return Math.max(d.y0 * radius, d.y1 * radius - 1); });
+	                root = partition(data);
+	                root.each(function(d) { d.current = d; return d.current; });
+	                var g = svg.append("g")
+	                    .attr("transform", "translate(" + (width / 2) + "," + (width / 2) + ")");
+	                var path = g.append("g")
 	                .selectAll("path")
 	                .data(root.descendants().slice(1))
 	                .join("path")
-	                    .attr("fill", d => {
+	                    .attr("fill", function(d) {
 	                        if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
 	                            return viz.config._coloroverride[d.data.name];
 	                        }
@@ -313,10 +378,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        }
 	                        return color(d.data.name);
 	                    })
-	                    .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0)
-	                    .attr("d", d => arc(d.current));
+	                    .attr("fill-opacity", function(d) { return arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0; })
+	                    .attr("d", function(d) { return arc(d.current); });
 
-	                path.filter(d => d.children)
+	                path.filter(function(d) { return d.children; })
 	                    .style("cursor", "pointer")
 	                    .on("click", clicked);
 
@@ -324,7 +389,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    .on("mousemove", function() { tooltipMove(event);})
 	                    .on("mouseout", tooltiphide);
 
-	                const label = g.append("g")
+	                var label = g.append("g")
 	                    .attr("pointer-events", "none")
 	                    .attr("text-anchor", "middle")
 	                    .style("user-select", "none")
@@ -333,89 +398,42 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                .data(root.descendants().slice(1))
 	                .join("text")
 	                    .attr("dy", "0.35em")
-	                    .attr("fill-opacity", d => +labelVisible(d.current))
-	                    .attr("transform", d => labelTransform(d.current))
+	                    .attr("fill-opacity", function(d) { return +labelVisible(d.current); })
+	                    .attr("transform", function(d) { return labelTransform(d.current); })
 	                    .text(function(d) { if (viz.config.labels === "show") {return d.data.name; } else {return ""; }})
 	                    .each( textwrap );
-	                const parent = g.append("circle")
+	                var parent = g.append("circle")
 	                    .datum(root)
 	                    .attr("r", radius)
 	                    .attr("fill", "none")
 	                    .attr("pointer-events", "all")
 	                    .on("click", clicked);
 
-	                function clicked(p) {
-	                    if (p.parent === null) {
-	                        parent.style("cursor", "default");
-	                    } else {
-	                        parent.style("cursor", "pointer");
-	                    }
-	                    parent.datum(p.parent || root);
-
-	                    root.each(d => d.target = {
-	                        x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-	                        x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-	                        y0: Math.max(0, d.y0 - p.depth),
-	                        y1: Math.max(0, d.y1 - p.depth)
-	                    });
-
-	                    const t = g.transition().duration(750);
-
-	                    // Transition the data on all arcs, even the ones that aren’t visible,
-	                    // so that if this transition is interrupted, entering arcs will start
-	                    // the next transition from the desired position.
-	                    path.transition(t)
-	                        .tween("data", d => {
-	                            const i = d3.interpolate(d.current, d.target);
-	                            return t => d.current = i(t);
-	                        })
-	                        .filter(function(d) {
-	                            return +this.getAttribute("fill-opacity") || arcVisible(d.target);
-	                        })
-	                        .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 0.8 : 0.6) : 0)
-	                        .attrTween("d", d => () => arc(d.current));
-
-	                    label.filter(function(d) {
-	                        return +this.getAttribute("fill-opacity") || labelVisible(d.target);
-	                    }).transition(t)
-	                    .attr("fill-opacity", d => +labelVisible(d.target))
-	                    .attrTween("transform", d => () => labelTransform(d.current));
-	                }
-	                function arcVisible(d) {
-	                    return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
-	                }
-	                function labelVisible(d) {
-	                    return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
-	                }
-	                function labelTransform(d) {
-	                    const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
-	                    const y = (d.y0 + d.y1) / 2 * radius;
-	                    return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
-	                }
-
 	            } else {
 	                // https://observablehq.com/@d3/sunburst
 	                radius = width / 2;
-	                partition = data => d3.partition()
+	                partition = function(data) { 
+	                    return d3.partition()
 	                        .size([2 * Math.PI, radius])
 	                    (d3.hierarchy(data)
-	                        .sum(d => d.value)
-	                        .sort((a, b) => b.value - a.value));
+	                        .sum(function(d) { return d.value; })
+	                        .sort(function(a, b) { return b.value - a.value; })); 
+	                };
 	                color = viz.getColor(viz.data.rows.length);
 	                arc = d3.arc()
-	                    .startAngle(d => d.x0)
-	                    .endAngle(d => d.x1)
-	                    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+	                    .startAngle(function(d) { return d.x0; })
+	                    .endAngle(function(d) { return d.x1; })
+	                    .padAngle(function(d) { return Math.min((d.x1 - d.x0) / 2, 0.005); })
 	                    .padRadius(radius / 2)
-	                    .innerRadius(d => d.y0)
-	                    .outerRadius(d => d.y1 - 1);
-	                const root = partition(data);
+	                    .innerRadius(function(d) { return d.y0; })
+	                    .outerRadius(function(d) { return d.y1 - 1; });
+	                root = partition(data);
 	                var node = svg.append("g")
 	                    //.attr("fill-opacity", 0.8)
 	                    .selectAll("path")
-	                    .data(root.descendants().filter(d => d.depth))
+	                    .data(root.descendants().filter(function(d) { return d.depth; }))
 	                    .enter().append("path")
-	                        .attr("fill", d => {
+	                        .attr("fill", function(d) {
 	                            if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
 	                                return viz.config._coloroverride[d.data.name];
 	                            }
@@ -462,12 +480,12 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    .attr("text-anchor", "middle")
 	                    .attr("fill", viz.config.labelcolor)
 	                .selectAll("text")
-	                .data(root.descendants().filter(d => d.depth && (d.y0 + d.y1) / 2 * (d.x1 - d.x0) > 10))
+	                .data(root.descendants().filter(function(d) { return d.depth && (d.y0 + d.y1) / 2 * (d.x1 - d.x0) > 10; }))
 	                .enter().append("text")
 	                    .attr("transform", function(d) {
-	                        const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
-	                        const y = (d.y0 + d.y1) / 2;
-	                        return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+	                        var x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+	                        var y = (d.y0 + d.y1) / 2;
+	                        return "rotate(" + (x - 90) + ") translate(" + y + ",0) rotate(" + (x < 180 ? 0 : 180) + ")";
 	                    })
 	                    .attr("dy", "0.35em")
 	                    .text(function(d) { if (viz.config.labels === "show") {return d.data.name; } else {return ""; }})
