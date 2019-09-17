@@ -1,6 +1,6 @@
 <form class="splunk-formatter-section" section-label="General">
 
-        <splunk-control-group label="Click action">
+        <splunk-control-group label="Click action" help="">
                 <splunk-select name="{{VIZ_NAMESPACE}}.mode" value="static">
                         <option value="static">None</option>
                         <option value="zoomable">Zoom in</option>
@@ -9,7 +9,7 @@
                 </splunk-select>
         </splunk-control-group>
 
-        <splunk-control-group label="Color set">
+        <splunk-control-group label="Color set" help="">
                 <splunk-select name="{{VIZ_NAMESPACE}}.color" value="schemeCategory10">
                         <option value="schemeCategory10">Bright</option>
                         <option value="schemeAccent">Accent</option>
@@ -37,7 +37,7 @@
                 </splunk-select>
         </splunk-control-group>
 
-        <splunk-control-group label="Set color by">
+        <splunk-control-group label="Set color by" help="">
                 <splunk-select name="{{VIZ_NAMESPACE}}.colormode" value="root">
                         <option value="root">Base ring name</option>
                         <option value="parent">Parent ring name</option>
@@ -45,35 +45,35 @@
                 </splunk-select>
         </splunk-control-group>
 
-        <splunk-control-group label="Color overrides">
+        <splunk-control-group label="Color overrides" help="">
                 <splunk-text-input name="{{VIZ_NAMESPACE}}.coloroverride" value=""></splunk-text-input>
         </splunk-control-group>
 
-        <splunk-control-group label="Breadcrumbs">
+        <splunk-control-group label="Breadcrumbs" help="">
                 <splunk-radio-input name="{{VIZ_NAMESPACE}}.breadcrumbs" value="hide">
                         <option value="show">Show</option>
                         <option value="hide">Hide</option>
                 </splunk-radio-input>
         </splunk-control-group>
         
-        <splunk-control-group label="Labels">
+        <splunk-control-group label="Labels" help="">
                 <splunk-radio-input name="{{VIZ_NAMESPACE}}.labels" value="show">
                         <option value="show">Show</option>
                         <option value="hide">Hide</option>
                 </splunk-radio-input>
         </splunk-control-group>
         
-        <splunk-control-group label="Label size">
+        <splunk-control-group label="Label size" help="">
                 <splunk-text-input name="{{VIZ_NAMESPACE}}.labelsize" value="100" style="width:64px; vertical-align:top; display:inline-block; flex:none; margin-right:4px;"></splunk-text-input>
                 <span style="display:inline-block; margin:5px 15px 5px 5px;">%</span>
         </splunk-control-group> 
 
-        <splunk-control-group label="Label width">
+        <splunk-control-group label="Label width" help="">
                 <splunk-text-input name="{{VIZ_NAMESPACE}}.labelwidth" value="100" style="width:64px; vertical-align:top; display:inline-block; flex:none; margin-right:4px;"></splunk-text-input>
                 <span style="display:inline-block; margin:5px 15px 5px 5px;">px</span>
         </splunk-control-group>
 
-        <splunk-control-group label="Label color">
+        <splunk-control-group label="Label color" help="">
                 <splunk-color-picker name="{{VIZ_NAMESPACE}}.labelcolor" value="#000000" type="splunkCategorical" style="vertical-align:top; display:inline-block;">
                         <splunk-color>#ffffff</splunk-color>
                         <splunk-color>#C6C6C6</splunk-color>
@@ -95,8 +95,8 @@
 </form>
 
 <form class="splunk-formatter-section" section-label="Help">
-        <splunk-control-group label=" ">
-        <div style="margin-top:40px 10px 10px 0">
+        <splunk-control-group label=" " help="">
+        <div style="margin:40px 10px 10px -100px">
                 <div>Example queries:</div>
                 <div style="margin-top:10px;"><code>... | table group1 group2 group3 count</code></div>
                 <div>or</div>
