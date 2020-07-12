@@ -1,11 +1,10 @@
-[default]
-default.visualizations.custom.sunburst_viz.sunburst_viz.mode = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.labels = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.breadcrumbs = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.labelsize = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.labelwidth = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.labelcolor = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.color = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.colormode = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.coloroverride = <string>
-default.visualizations.custom.sunburst_viz.sunburst_viz.maxrows = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.mode = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.labels = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.breadcrumbs = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.labelsize = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.labelwidth = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.labelcolor = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.color = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.colormode = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.coloroverride = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.maxrows = <string>
