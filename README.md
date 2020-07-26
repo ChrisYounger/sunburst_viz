@@ -2,9 +2,8 @@
 
 Configurable Sunburst visualization that is easy to use. Built using D3. Has tooltips, optional breadcrumbs, label customisations and numerous color schemes. Works in dark-mode. Sunburst charts are useful to display hierarchical data.
 
-Copyright (C) 2019 Chris Younger. I am a Splunk Professional Services consultant working for JDS Australia, in Brisbane Australia.
 
-<a href="https://splunkbase.splunk.com/app/4550/">Splunkbase</a> | [Source code](https://github.com/ChrisYounger/sunburst_viz) |  [Questions, Bugs or Suggestions](https://answers.splunk.com/app/questions/4550.html) | [My Splunk apps](https://splunkbase.splunk.com/apps/#/author/chrisyoungerjds)
+Copyright (C) 2020 Chris Younger | <a href="https://splunkbase.splunk.com/app/4550/">Splunkbase</a> | [Source code](https://github.com/ChrisYounger/sunburst_viz) |  [Questions, Bugs or Suggestions](https://answers.splunk.com/app/questions/4550.html) | [My Splunk apps](https://splunkbase.splunk.com/apps/#/author/chrisyoungerjds)
 
 
 ![screenshot](https://raw.githubusercontent.com/ChrisYounger/sunburst_viz/master/appserver/static/demo.png)
