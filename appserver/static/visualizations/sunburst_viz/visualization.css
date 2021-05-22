@@ -9,10 +9,9 @@
     position: absolute;
     z-index: 10;
     visibility: hidden;
-    background-color: #F2F4F5;
-    border: 1px solid #C6C6C6;
+    background-color: white;
     text-align: center;
-    padding: 6px;
+    padding: 8px 14px;
     border-radius: 4px;
     color: #5E5E5E;
     box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);

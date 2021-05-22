@@ -208,6 +208,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Last column of data must contain numeric values.<br /><a href='/app/sunburst_viz/documentation' target='_blank'>Examples and Documentation</a></div>");
 	                return;
 	            }
+	            if (viz.data.fields.length <= 1) {
+	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>There must be at least 1 column of labels.<br /><a href='/app/sunburst_viz/documentation' target='_blank'>Examples and Documentation</a></div>");
+	                return;
+	            }
 	            if (validRows > Number(viz.config.maxrows)) {
 	                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Too many rows of data. Increase limit in formatting settings. (Total rows:" + validRows + ", Limit: " + viz.config.maxrows + "). </div>");
 	                return;
