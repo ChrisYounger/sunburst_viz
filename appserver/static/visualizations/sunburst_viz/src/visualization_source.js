@@ -45,6 +45,7 @@ function(
                 labelcolor: "#000000",
                 colormode: "root",
                 color: "schemeCategory10",
+                nulltoken: "",
                 maxrows: "1500"
             };
             // Override defaults with selected items from the UI
@@ -103,6 +104,10 @@ function(
             var validRows = 0;
             var data = {"name": "root", "children": []};
             var drilldown, i, k;
+            viz.valueFieldName = "";
+            if (viz.data.fields.length > 1) {
+                viz.valueFieldName = viz.data.fields[viz.data.fields.length-1].name;
+            }
             for (i = 0; i < viz.data.rows.length; i++) {
                 var parts = viz.data.rows[i].slice();
                 var nodesize = parts.pop();
@@ -155,7 +160,7 @@ function(
                 console.log("Rows skipped because last column is not numeric: ", skippedRows);
             }
             if (skippedRows && ! validRows) {
-                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Last column of data must contain numeric values.</div>");
+                viz.$container_wrap.empty().append("<div class='sunburst_viz-bad_data'>Last column of data must contain numeric values.<br /><a href='/app/sunburst_viz/documentation' target='_blank'>Examples and Documentation</a></div>");
                 return;
             }
             if (validRows > Number(viz.config.maxrows)) {
@@ -407,27 +412,31 @@ function(
 
                 if (viz.config.mode === "token" || viz.config.mode === "drilldown") {
                     node.style("cursor", "pointer")
-                        .on("click", function(d, browserEvent){
-                            if (viz.config.mode === "token") {
-                                var defaultTokenModel = splunkjs.mvc.Components.get('default');
-                                var submittedTokenModel = splunkjs.mvc.Components.get('submitted');
-                                for (var item in d.data.drilldown) {
-                                    if (d.data.drilldown.hasOwnProperty(item)) {
-                                        console.log("Setting token $sunburst_viz_" +  item + "$ to", d.data.drilldown[item]);
-                                        if (defaultTokenModel) {
-                                            defaultTokenModel.set("sunburst_viz_" + item, d.data.drilldown[item]);
-                                        } 
-                                        if (submittedTokenModel) {
-                                            submittedTokenModel.set("sunburst_viz_" + item, d.data.drilldown[item]);
-                                        }
+                        .on("click", function(d){
+                            var defaultTokenModel = splunkjs.mvc.Components.get('default');
+                            var submittedTokenModel = splunkjs.mvc.Components.get('submitted');
+                            var drilldown_obj = {};
+                            for (var i = 0; i < viz.data.fields.length; i++) {
+                                if (viz.valueFieldName !== viz.data.fields[i].name) {
+                                    var tokenName = "sunburst_viz_" + viz.data.fields[i].name;
+                                    if (d.data.drilldown.hasOwnProperty(viz.data.fields[i].name)) {
+                                        drilldown_obj[tokenName] = d.data.drilldown[viz.data.fields[i].name];
+                                    } else {
+                                        drilldown_obj[tokenName] = viz.config.nulltoken;
+                                    }
+                                    console.log("Setting token $" +  tokenName + "$ to", drilldown_obj[tokenName]);
+                                    if (defaultTokenModel) {
+                                        defaultTokenModel.set(tokenName, drilldown_obj[tokenName]);
+                                    }
+                                    if (submittedTokenModel) {
+                                        submittedTokenModel.set(tokenName, drilldown_obj[tokenName]);
                                     }
                                 }
-                            } else {
-                                viz.drilldown({
-                                    action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
-                                    data: d.data.drilldown
-                                });
                             }
+                            viz.drilldown({
+                                action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
+                                data: drilldown_obj
+                            }, event);
                         });
                 }
                 svg.append("g")

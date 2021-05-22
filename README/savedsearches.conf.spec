@@ -7,4 +7,5 @@ display.visualizations.custom.sunburst_viz.sunburst_viz.labelcolor = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.color = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.colormode = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.coloroverride = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.nulltoken = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.maxrows = <string>
