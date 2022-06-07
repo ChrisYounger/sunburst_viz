@@ -174,7 +174,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        // Not yet at the end of the sequence; move down the tree.
 	                        var foundChild = false;
 	                        for (k = 0; k < children.length; k++) {
-	                            if (children[k].name == nodeName && typeof children[k].children !== "undefined" ) { 
+	                            if (children[k].name == nodeName && typeof children[k].children !== "undefined") {
 	                                childNode = children[k];
 	                                foundChild = true;
 	                                break;
