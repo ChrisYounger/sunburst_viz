@@ -47,6 +47,25 @@ INFO,#1a9035,ERROR,#b22b32,WARN,#AF5300
 
 
 
+
+
+## Drilldown options
+
+The Click Action setting under Format Visualization has four settings:
+
+None - Nothing will happen when the sunburst is clicked
+
+Zoom in - The sunburst will display only two rings at a time.  Clicking a ring will filter the sunburst to that slice, displaying its subcategories as the inner ring.  To zoom back out, click the whitespace inside the inner ring
+
+Drilldown to search - Clicking the sunburst will open the underlying SPL as a search
+
+Set tokens ＄sunburst_viz_{field}＄ - Clicking the sunburst will set tokens with names according to the field values in your result set.  Tokens will be set all the way down to the subcategory that is clicked, so if you have "| stats count by index source sourcetype", clicking a value in the source ring will set tokens `$sunburst_viz_index$` and `$sunburst_viz_source$`, but not `$sunburst_viz_sourcetype$`.
+
+
+
+
+
+
 ## Third party software
 
 The following third-party libraries are used by this app. Thank you!
