@@ -141,18 +141,6 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            if (!(viz.$container_wrap.height() > 0)) {
 	                return;
 	            }
-	            var total = 0;
-	            for (var l = 0; l < viz.data.rows.length; l++) {
-	                total += Number(viz.data.rows[l][viz.data.rows[l].length-1]);
-	            }
-	            var skippedRows = 0;
-	            var validRows = 0;
-	            var data = {"name": "root", "children": []};
-	            var drilldown, i, k;
-	            viz.valueFieldName = "";
-	            if (viz.data.fields.length > 1) {
-	                viz.valueFieldName = viz.data.fields[viz.data.fields.length-1].name;
-	            }
 
                 // --- Precompute field indexes ---
                 const colorFieldIndex = viz.data.fields.findIndex(f => f.name === "_color");
@@ -168,6 +156,20 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
                 const dimFieldIndexes = viz.data.fields
                 	.map((_, idx) => idx)
                 	.filter(idx => idx !== valueFieldIndex && idx !== colorFieldIndex);
+
+	            // Calculate total from all values from value field - used for tooltip
+                    var total = 0;
+	            for (var l = 0; l < viz.data.rows.length; l++) {
+	                total += Number(viz.data.rows[l][valueFieldIndex]);
+	            }
+	            var skippedRows = 0;
+	            var validRows = 0;
+	            var data = {"name": "root", "children": []};
+	            var drilldown, i, k;
+	            viz.valueFieldName = "";
+	            if (valueFieldIndex > 1) {
+	                viz.valueFieldName = viz.data.fields[valueFieldIndex].name;
+	            }
 
 	            for (i = 0; i < viz.data.rows.length; i++) {
                 	const row = viz.data.rows[i];
