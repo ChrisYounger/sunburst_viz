@@ -142,26 +142,27 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                return;
 	            }
 
-                // --- Precompute field indexes ---
-                const colorFieldIndex = viz.data.fields.findIndex(f => f.name === "_color");
-                // value field is the last field that is NOT _color
-                const valueFieldIndex = (() => {
-                for (let idx = viz.data.fields.length - 1; idx >= 0; idx--) {
-                	if (idx !== colorFieldIndex) return idx;
-                }
-                return -1; // should never happen unless fields is empty or only _color
-                })();                
+	            // --- Precompute field indexes ---
+	            var colorFieldIndex = viz.data.fields.findIndex(f => f.name === "color");
+	            // value field is the last field that is NOT _color
+	            var valueFieldIndex = (() => {
+	                for (let idx = viz.data.fields.length - 1; idx >= 0; idx--) {
+	                    if (idx !== colorFieldIndex) return idx;
+	                }
+	                return -1; // should never happen unless fields is empty or only _color
+	            })();                
 
-                // dimension fields are everything except value and _color
-                const dimFieldIndexes = viz.data.fields
-                	.map((_, idx) => idx)
-                	.filter(idx => idx !== valueFieldIndex && idx !== colorFieldIndex);
+	            // dimension fields are everything except value and _color
+	            var dimFieldIndexes = viz.data.fields
+	                .map((_, idx) => idx)
+	                .filter(idx => idx !== valueFieldIndex && idx !== colorFieldIndex);
 
 	            // Calculate total from all values from value field - used for tooltip
-                    var total = 0;
+	            var total = 0;
 	            for (var l = 0; l < viz.data.rows.length; l++) {
 	                total += Number(viz.data.rows[l][valueFieldIndex]);
-	            }
+	            }            
+
 	            var skippedRows = 0;
 	            var validRows = 0;
 	            var data = {"name": "root", "children": []};
@@ -170,27 +171,25 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            if (valueFieldIndex > 1) {
 	                viz.valueFieldName = viz.data.fields[valueFieldIndex].name;
 	            }
-
 	            for (i = 0; i < viz.data.rows.length; i++) {
-                	const row = viz.data.rows[i];
-	                const nodesize = row[valueFieldIndex];
-                	if (nodesize === "" || nodesize === null || isNaN(Number(nodesize))) {
+	                var row = viz.data.rows[i];
+	                var nodesize = row[valueFieldIndex];
+	                if (nodesize === "" || nodesize === null || isNaN(Number(nodesize))) {
 	                    skippedRows++;
 	                    continue;
 	                } else {
 	                    validRows++;
 	                }
-                	// parse colors from _color field (if present)
-                	const colors = (colorFieldIndex >= 0 && row[colorFieldIndex])
-                	? String(row[colorFieldIndex])
-                        .split(",")
-                        .map(s => s.trim())
-                        .filter(Boolean)
-                	: [];
+	                // parse colors from _color field (if present)
+	                var colors = (colorFieldIndex >= 0 && row[colorFieldIndex])
+	                ? String(row[colorFieldIndex])
+	                    .split(",")
+	                    .map(s => s.trim())
+	                    .filter(Boolean)
+	                : [];
 
-                	// build parts WITHOUT _color (and without the value field)
-                	const parts = dimFieldIndexes.map(idx => row[idx]);
-        	
+	                // build parts WITHOUT _color (and without the value field)
+	                var parts = dimFieldIndexes.map(idx => row[idx]);
 	                while (parts[parts.length-1] === null || parts[parts.length-1] === "") {
 	                    parts.pop();
 	                }
@@ -199,9 +198,16 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    var children = currentNode.children;
 	                    var nodeName = parts[j];
 	                    var childNode;
+	                    // choose color for this level j. If a colour is not present, the last defined colour is used, i.e. colour cascades outwards
+	                    var nodeColor;
 
-                        // choose color for this level j. If a colour is not present, the last defined colour is used, i.e. colour cascases outwards
-                        const nodeColor = colors[j] ?? colors[colors.length - 1];
+	                    if (colors[j] !== undefined && colors[j] !== null) {
+	                    // Use the color at the specific index
+	                    nodeColor = colors[j];
+	                    } else {
+	                    // Fallback to the last color in the array
+	                    nodeColor = colors[colors.length - 1];
+	                    }
 
 	                    if (j + 1 < parts.length) {
 	                        // Not yet at the end of the sequence; move down the tree.
@@ -216,26 +222,32 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        // If we don't already have a child node for this branch, create it.
 	                        if (!foundChild) {
 	                            drilldown = {};
-                                for (let m = 0; m <= j; m++) {
-                                	const idx = dimFieldIndexes[m];
-                                	drilldown[viz.data.fields[idx].name] = row[idx];
-                                }
-                                childNode = {"name": nodeName, "drilldown": drilldown, ...(nodeColor ? { "color": nodeColor } : {}), "children": []};
+	                            for (let m = 0; m <= j; m++) {
+	                                var idx = dimFieldIndexes[m];
+	                                drilldown[viz.data.fields[idx].name] = row[idx];
+	                            }
+	                            childNode = {"name": nodeName, "drilldown": drilldown, "children": []};
+	                            if (nodeColor) {
+	                                childNode.color = nodeColor;
+	                            }
 	                            children.push(childNode);
 	                        }  else {
-                                // optional: if node already exists but has no color yet, set it
-                                if (childNode.color == null && nodeColor != null) childNode.color = nodeColor;
-                        	}
+	                            // optional: if node already exists but has no color yet, set it
+	                            if (childNode.color == null && nodeColor != null) childNode.color = nodeColor;
+	                        }
 	                        currentNode = childNode;
 	                    } else {
 	                        drilldown = {};
-                        	// drilldown includes all dimension fields (excluding _color)
-                        	for (let m = 0; m < dimFieldIndexes.length; m++) {
-                                const idx = dimFieldIndexes[m];
-                                drilldown[viz.data.fields[idx].name] = row[idx];
-                        	}
+	                        // drilldown includes all dimension fields (excluding _color)
+	                        for (let m = 0; m < dimFieldIndexes.length; m++) {
+	                            var idx = dimFieldIndexes[m];
+	                            drilldown[viz.data.fields[idx].name] = row[idx];
+	                        }
 	                        // Reached the end of the sequence; create a leaf node.
-                        	childNode = {"name": nodeName, "drilldown": drilldown, ...(nodeColor ? { "color": nodeColor } : {}), "value": nodesize};
+	                        childNode = {"name": nodeName, "drilldown": drilldown, "value": nodesize};
+	                        if (nodeColor) {
+	                            childNode.color = nodeColor;
+	                        }                        
 	                        children.push(childNode);
 	                    }
 	                }
@@ -415,10 +427,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                .data(root.descendants().slice(1))
 	                .join("path")
 	                    .attr("fill", function(d) {
-                        	// If the row itself has colour definitions, use those over all else 
-                        	if (d.data.color) {
-                                return d.data.color;
-                        	}
+	                        // If the row itself has colour definitions, use those over all else 
+	                        if (d.data.color) {
+	                            return d.data.color;
+	                        }
 	                        if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
 	                            return viz.config._coloroverride[d.data.name];
 	                        }
@@ -486,10 +498,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    .data(root.descendants().filter(function(d) { return d.depth; }))
 	                    .enter().append("path")
 	                        .attr("fill", function(d) {
-                                // If the row itself has colour definitions, use those over all else 
-                                if (d.data.color) {
-                                    return d.data.color;
-                                }
+	                            // If the row itself has colour definitions, use those over all else 
+	                            if (d.data.color) {
+	                                return d.data.color;
+	                            }
 	                            if (viz.config._coloroverride.hasOwnProperty(d.data.name)) {
 	                                return viz.config._coloroverride[d.data.name];
 	                            }

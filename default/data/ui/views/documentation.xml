@@ -48,12 +48,12 @@
 <pre class="highlight">
 <code>INFO,#1a9035,ERROR,#b22b32,WARN,#AF5300</code></pre>
 <br/>
-<p>It's possible to take total control over the color codes used for each segment by adding a field called <code>_color</code>, which contains a comma separated list of color codes. Note that this field is not visible in the table.</p>
+<p>It's possible to take total control over the color codes used for each segment by adding a special field called <code>color</code>, which contains a comma separated list of color codes.</p>
 <pre class="highlight">
 <code>| stats count by inner middle outer
-| eval _color="#1a9035,#b22b32,#AF5300"</code></pre>
+| eval color="#1a9035,#b22b32,#AF5300"</code></pre>
 <p>This defines the color used for each column of the data for the particular row. If you provide fewer color values in the comma separated list than there are data columns, then the last defined color will cascade to the outer rings.</p>
-<p>When defining the _color field, it overrides the "Set color by" and "Color overrides" format options.</p>
+<p>When defining the 'color' field, it overrides the "Set color by" and "Color overrides" format options.</p>
 <br/>
 <p>Examples of color themes: <a href="/static/app/sunburst_viz/themes.png"><br /><img alt="" src="/static/app/sunburst_viz/themes.png" style="max-width: 500px;" /></a></p>
 
