@@ -54,13 +54,28 @@
 <br/>
 <br/>
 
+<h2>Drilldown options</h2>
+
+The Click Action setting under Format Visualization has four settings:<br/><br/>
+
+<ul>
+<li><strong>None</strong> - Nothing will happen when the sunburst is clicked</li>
+<li><strong>Zoom in</strong> - The sunburst will display only two rings at a time.  Clicking a ring will filter the sunburst to that slice, displaying its subcategories as the inner ring.  To zoom back out, click the whitespace inside the inner ring</li>
+<li><strong>Drilldown to search</strong> - Clicking the sunburst will open the underlying SPL as a search</li>
+<li><strong>Set tokens ＄sunburst_viz_{field}＄</strong> - Clicking the sunburst will set tokens with names according to the field values in your result set.  Tokens will be set all the way down to the subcategory that is clicked, so if you have "| stats count by index source sourcetype", clicking a value in the source ring will set tokens <code class="highlight">$sunburst_viz_index$</code> and <code class="highlight">$sunburst_viz_source$</code>, but not <code class="highlight">$sunburst_viz_sourcetype$</code>.</li>
+</ul>
+<br/>
+<br/>
+<br/>
 <h2>Third party software</h2>
 <p>The following third-party libraries are used by this app. Thank you!</p>
 <ul>
 <li>jQuery - MIT - <a href="https://jquery.com/">https://jquery.com/</a></li>
 <li>D3 - BSD 3-Clause - <a href="https://d3js.org/">https://d3js.org/</a></li>
 </ul>
-
+<br/>
+<br/>
+<br/>
 </div>
 </html>
     </panel>
