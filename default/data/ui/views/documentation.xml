@@ -58,6 +58,13 @@
 <p>Examples of color themes: <a href="/static/app/sunburst_viz/themes.png"><br /><img alt="" src="/static/app/sunburst_viz/themes.png" style="max-width: 500px;" /></a></p>
 
 <br/>
+<p>You can also specify color definitions using the extended settings</p>
+<h2>Extended color and tooltip options</h2>
+<p>You can add custom tooltip and define the segment color by appending the tooltip and color definition after the value of a field, separating the base value with the additional configuration with a delimiter.</p>
+<pre class="highlight">
+<code>|tstats count where index=* BY index sourcetype source
+| eval sourcetye=printf("%s||%s||%s", sourcetye, "<b style="color:blue">A sourcetype defines the structure and format of data in Splunk"</b>", "#990000")</code></pre>
+<p>will add a bold blue sentence to the standard tooltip and the segment colour will be #990000. Note that this way of defining colors will override any <code>color</code> field in the result</p>
 <br/>
 <br/>
 
