@@ -47,7 +47,8 @@ function(
                 color: "schemeCategory10",
                 nulltoken: "",
                 maxrows: "1500",
-                delimiter: "||"
+                delimiter: "||",
+                tooltiphtml: "no"
             };
             // Override defaults with selected items from the UI
             for (var opt in config) {
@@ -300,7 +301,11 @@ function(
                 }
                 // Add any tooltip - supports html 
                 if (d.data.tooltip) {
-                    $("<div></div>").html(d.data.tooltip).appendTo(tt);
+                    if (viz.config.tooltiphtml==="yes") {
+                        $("<div></div>").html(d.data.tooltip).appendTo(tt);
+                    } else {
+                        $("<div></div>").text(d.data.tooltip).appendTo(tt);
+                    }
                 }
                 $("<div></div>").text(format(d.value) + " - " + Math.round(d.value / total * 10000) / 100 + " %").appendTo(tt);
                 viz.container_wrap_offset = viz.$container_wrap.offset();

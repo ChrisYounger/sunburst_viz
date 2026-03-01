@@ -91,7 +91,9 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                colormode: "root",
 	                color: "schemeCategory10",
 	                nulltoken: "",
-	                maxrows: "1500"
+	                maxrows: "1500",
+	                delimiter: "||",
+	                tooltiphtml: "no"
 	            };
 	            // Override defaults with selected items from the UI
 	            for (var opt in config) {
@@ -171,6 +173,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            if (valueFieldIndex > 1) {
 	                viz.valueFieldName = viz.data.fields[valueFieldIndex].name;
 	            }
+	            var delimiter = viz.config.delimiter;   // e.g. "||" or "::"
+	            if (typeof delimiter !== "string" || delimiter.length == 0) {
+	                delimiter = undefined;
+	            }
 	            for (i = 0; i < viz.data.rows.length; i++) {
 	                var row = viz.data.rows[i];
 	                var nodesize = row[valueFieldIndex];
@@ -188,7 +194,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    .filter(Boolean)
 	                : [];
 
-	                // build parts WITHOUT _color (and without the value field)
+	                // build parts WITHOUT color (and without the value field)
 	                var parts = dimFieldIndexes.map(idx => row[idx]);
 	                while (parts[parts.length-1] === null || parts[parts.length-1] === "") {
 	                    parts.pop();
@@ -196,19 +202,30 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                var currentNode = data;
 	                for (var j = 0; j < parts.length; j++) {
 	                    var children = currentNode.children;
-	                    var nodeName = parts[j];
-	                    var childNode;
-	                    // choose color for this level j. If a colour is not present, the last defined colour is used, i.e. colour cascades outwards
-	                    var nodeColor;
+	                    let nodeName = parts[j];                // default: no split;
+	                    let nodeTooltip;
+	                    let nodeColor;
 
-	                    if (colors[j] !== undefined && colors[j] !== null) {
-	                    // Use the color at the specific index
-	                    nodeColor = colors[j];
-	                    } else {
-	                    // Fallback to the last color in the array
-	                    nodeColor = colors[colors.length - 1];
+	                    if (delimiter && nodeName.indexOf(delimiter) !== -1) {
+	                        var nameField = nodeName.split(delimiter);
+	                        nodeName = nameField[0];
+	                        nodeTooltip = nameField[1] || undefined;
+	                        nodeColor = nameField[2] || undefined;
+	                    }                    
+	                    
+	                    // If node colour is not yet defined, see if there is a specific colour variable set
+	                    // If a colour is not present, the last defined colour is used, i.e. colour cascades outwards
+	                    if (nodeColor === undefined) {
+	                        if (nodeColor === undefined && colors[j] !== undefined && colors[j] !== null) {
+	                            // Use the color at the specific index
+	                            nodeColor = colors[j];
+	                        } else {
+	                            // Fallback to the last color in the array
+	                            nodeColor = colors[colors.length - 1];
+	                        }
 	                    }
-
+	                    
+	                    var childNode;
 	                    if (j + 1 < parts.length) {
 	                        // Not yet at the end of the sequence; move down the tree.
 	                        var foundChild = false;
@@ -224,11 +241,23 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                            drilldown = {};
 	                            for (let m = 0; m <= j; m++) {
 	                                var idx = dimFieldIndexes[m];
-	                                drilldown[viz.data.fields[idx].name] = row[idx];
+
+	                                // Handle splitting the data for the drilldown object if configured
+	                                var val = row[idx];
+	                                if (delimiter && val != null) {
+	                                    var s = String(val);
+	                                    if (s.indexOf(delimiter) !== -1) {
+	                                        val = s.split(delimiter)[0];   // take only part 0
+	                                    }
+	                                }
+	                                drilldown[viz.data.fields[idx].name] = val;
 	                            }
 	                            childNode = {"name": nodeName, "drilldown": drilldown, "children": []};
 	                            if (nodeColor) {
 	                                childNode.color = nodeColor;
+	                            }
+	                            if (nodeTooltip) {
+	                                childNode.tooltip = nodeTooltip;
 	                            }
 	                            children.push(childNode);
 	                        }  else {
@@ -241,13 +270,24 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                        // drilldown includes all dimension fields (excluding _color)
 	                        for (let m = 0; m < dimFieldIndexes.length; m++) {
 	                            var idx = dimFieldIndexes[m];
-	                            drilldown[viz.data.fields[idx].name] = row[idx];
+	                            // Handle splitting the data for the drilldown object if configured
+	                            var val = row[idx];
+	                            if (delimiter && val != null) {
+	                                var s = String(val);
+	                                if (s.indexOf(delimiter) !== -1) {
+	                                    val = s.split(delimiter)[0];   // take only part 0
+	                                }
+	                            }
+	                            drilldown[viz.data.fields[idx].name] = val;
 	                        }
 	                        // Reached the end of the sequence; create a leaf node.
 	                        childNode = {"name": nodeName, "drilldown": drilldown, "value": nodesize};
 	                        if (nodeColor) {
 	                            childNode.color = nodeColor;
 	                        }                        
+	                        if (nodeTooltip) {
+	                            childNode.tooltip = nodeTooltip;
+	                        }
 	                        children.push(childNode);
 	                    }
 	                }
@@ -303,6 +343,14 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	                    breadcrumbs.html(crumbs);
 	                    clearTimeout(viz.breadcrumbTimeout);
 	                    viz.breadcrumbTimeout = setTimeout(function(){ breadcrumbs.empty(); },5000);
+	                }
+	                // Add any tooltip - supports html 
+	                if (d.data.tooltip) {
+	                    if (viz.config.tooltiphtml==="yes") {
+	                        $("<div></div>").html(d.data.tooltip).appendTo(tt);
+	                    } else {
+	                        $("<div></div>").text(d.data.tooltip).appendTo(tt);
+	                    }
 	                }
 	                $("<div></div>").text(format(d.value) + " - " + Math.round(d.value / total * 10000) / 100 + " %").appendTo(tt);
 	                viz.container_wrap_offset = viz.$container_wrap.offset();

@@ -9,3 +9,5 @@ display.visualizations.custom.sunburst_viz.sunburst_viz.colormode = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.coloroverride = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.nulltoken = <string>
 display.visualizations.custom.sunburst_viz.sunburst_viz.maxrows = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.deliminator = <string>
+display.visualizations.custom.sunburst_viz.sunburst_viz.tooltiphtml = <string>
